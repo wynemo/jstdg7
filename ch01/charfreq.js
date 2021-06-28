@@ -7,7 +7,10 @@
  *    node charfreq.js < corpus.txt
  */
 
-// This class extends Map so that the get() method returns the specified
+const fs = require("fs");
+const readline = require("readline");
+
+    // This class extends Map so that the get() method returns the specified
 // value instead of null when the key is not in the map
 class DefaultMap extends Map {
     constructor(defaultValue) {
@@ -81,12 +84,29 @@ class Histogram {
 // asynchronously reads chunks of text from standard input, and adds those chunks to
 // the histogram. When it reaches the end of the stream, it returns this histogram
 async function histogramFromStdin() {
-    process.stdin.setEncoding("utf-8"); // Read Unicode strings, not bytes
-    let histogram = new Histogram();
-    for await (let chunk of process.stdin) {
-        histogram.add(chunk);
+    let args = process.argv;
+    if (args.length > 0) {
+        const fileStream = fs.createReadStream(args[0]);
+        fileStream.setEncoding('utf-8');
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
+        });
+        let histogram = new Histogram();
+        for await (const line of rl) {
+            // Each line in input.txt will be successively available here as `line`.
+            histogram.add(line);
+        }
+        return histogram
+    } else {
+        process.stdin.setEncoding("utf-8"); // Read Unicode strings, not bytes
+        let histogram = new Histogram();
+        for await (let chunk of process.stdin) {
+            histogram.add(chunk);
+        }
+        return histogram;
+
     }
-    return histogram;
 }
 
 // This one final line of code is the main body of the program.
